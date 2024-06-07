@@ -1,2 +1,7 @@
 /target/
 /src/main/java/org/
+*.jenkinsfile
+.owaspignore
+.classpath
+.project
+
