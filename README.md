@@ -12,7 +12,7 @@ The Release-Notes can be found in the file [ReleaseNotes.md](./ReleaseNotes.md)
 ### Prerequisites
 In case you want to clone the project you need:
 * Git
-* Java JDK 21 or newer (Tested on OpenJDK)
+* Java JDK 16 or newer (Tested on OpenJDK)
 * Maven 3.8.0 or newer
 
 

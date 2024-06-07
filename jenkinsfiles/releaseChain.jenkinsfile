@@ -1,0 +1,67 @@
+@Library('gematik-jenkins-shared-library') _
+
+def JIRA_PROJECT_ID = 'OPNCP'
+def REMOTE_BRANCH = 'main'
+def RELEASE_TEXT = 'Release'
+
+pipeline {
+    options {
+        disableConcurrentBuilds()
+        buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')
+    }
+
+    agent { label 'k8-maven' }
+
+    tools {
+        maven 'Default'
+    }
+
+    parameters {
+        string(name: 'NEW_VERSION', defaultValue: '', description: 'Bitte die nächste Version für das Projekt eingeben, format [0-9]+.[0-9]+.[0-9]+ \nHinweis: Version 0.0.[0-9] ist keine gültige Version!')
+        choice(name: 'GITLAB', choices: ['YES', 'NO'], description: 'Internes Release wird ausgeführt.')
+        choice(name: 'GITHUB', choices: ['YES', 'NO'], description: 'GitHub-Release wird ausgeführt.')
+        choice(name: 'MAVENCENTRAL', choices: ['YES', 'NO'], description: 'Maven-Central-Release wird ausgeführt.')
+
+    }
+
+    stages {
+
+        stage('Internal-Release') {
+            when {
+                expression { params.GITLAB == 'YES' }
+            }
+            steps {
+                build job: 'epa4all-examples-Release',
+                parameters: [
+                    string(name: 'RELEASE_VERSION', value: String.valueOf("${RELEASE_VERSION}")),
+                    string(name: 'NEW_VERSION', value: String.valueOf("${NEW_VERSION}")),
+                ]
+            }
+        }
+
+        stage('GitHub-Release') {
+            when {
+                expression { params.GITHUB == 'YES' }
+            }
+            steps {
+               build job: 'epa4all-examples-GitHub-publish',
+               parameters: [
+                    string(name: 'GITLAB_TAG', value: String.valueOf("${RELEASE_TEXT}-${RELEASE_VERSION}")),
+                    text(name: 'COMMIT_MESSAGE', value: String.valueOf("${RELEASE_TEXT}-${RELEASE_VERSION}")),
+                    string(name: 'REMOTE_BRANCH', value: String.valueOf(REMOTE_BRANCH)),
+                    string(name: 'AUTOMATIC_MERGE', value: String.valueOf('YES')),
+                    string(name: 'GITHUB_TAG', value: String.valueOf("${RELEASE_TEXT}-${RELEASE_VERSION}")),
+               ]
+            }
+        }
+
+        stage('Maven-Central-Release') {
+            when {
+                expression { params.MAVENCENTRAL == 'YES' }
+            }
+            steps {
+                build job: 'epa4all-examples-maven-central-release'
+            }
+        }
+    }
+}
