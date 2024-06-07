@@ -1,0 +1,93 @@
+@Library('gematik-jenkins-shared-library') _
+def CREDENTIAL_ID_GEMATIK_GIT = 'GITLAB.tst_tt_build.Username_Password'
+def BRANCH = 'EUV-1793'
+def JIRA_PROJECT_ID = "OPNCP"
+def TAG_NAME = "CI-${BUILD_NUMBER}"
+def REPO_URL = createGitUrl('git/eurovision/epa4all-examples')
+def JIRA_VERSION = ""
+def VERSION = "0.1.0"
+def POM_FILE = 'pom.xml'
+def TEAMS_URL = 'https://gematikde.webhook.office.com/webhookb2/94534f8e-b501-4f0e-9958-2be6c880110c@30092c62-4dbf-43bf-a33f-10d21b5b660a/JenkinsCI/586be98ebc95425db05a62645e89f75a/0035a3eb-892a-4974-8a1f-91ca060fa295'
+
+def VERSION_PATTERN = '^epa4all-([0-9])\\.([0-9]){1,2}\\.([0-9]){1,2}$'
+
+pipeline {
+    options {
+        disableConcurrentBuilds()
+    }
+    agent { label 'k8-maven' }
+	
+	tools {
+        maven 'Default'
+    }
+
+    stages {
+        stage('Initialise') {
+            steps {
+                setProperties([notifyTeams(TEAMS_URL)])
+				gitSetIdentity()
+                useJdk("OPENJDK21")
+            }
+        }        
+		
+		stage('Get Jira Versions') {
+            steps {
+                script {
+                    JIRA_VERSION = jiraCheckAndGetRegexVersion(jiraGetVersions(JIRA_PROJECT_ID), VERSION_PATTERN)
+                    VERSION = JIRA_VERSION.split("-")[1]
+                }
+            }
+        }
+		
+		stage('gitCreateBranch') {
+            steps {
+                gitCreateBranch()
+            }
+        }
+
+        stage('set Version') {
+			when { branch BRANCH }
+			steps {
+				mavenSetVersion("${VERSION}-${BUILD_NUMBER}", POM_FILE)
+				script {
+					VERSION = "${VERSION}-${BUILD_NUMBER}"
+				}
+			}            
+        }
+		
+		stage('Set Snapshot Version') {
+			when { not { branch BRANCH } }
+			steps {
+				mavenSetVersion("${VERSION}-SNAPSHOT", POM_FILE)
+				script {
+					VERSION = "${VERSION}-SNAPSHOT"
+				}
+			}
+		}
+		
+		stage('Build build') {
+            steps {
+                mavenBuild(POM_FILE)
+            }
+        }
+		
+		stage('deploy') {
+            when { branch BRANCH }
+            steps {
+                mavenDeploy(POM_FILE)
+            }
+        }
+		
+		stage('Tag and Push CI-build') {
+            when { branch BRANCH }
+            steps {
+                gitCreateAndPushTag(JIRA_PROJECT_ID, TAG_NAME)
+            }
+        }        
+    }
+    post {
+        always {
+			sendEMailNotification(getEuroVisionEMailList())
+        }
+    }
+}
