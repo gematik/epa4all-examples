@@ -9,7 +9,7 @@
         <version>3.2.5</version>
         <relativePath /> <!-- lookup parent from repository -->
     </parent>
-    <version>epa4all-0.1.5</version>
+    <version>epa4all-0.1.6</version>
     <groupId>de.gematik</groupId>
     <artifactId>de.gematik.epa4all.examples</artifactId>
     <name>de.gematik.epa4all.examples</name>
