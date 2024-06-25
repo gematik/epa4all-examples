@@ -3,7 +3,7 @@
 # epa4all examples
 
 ## About the Project
-Gematik publishes some specifications on how an ePA-FdV can access to the ePA-Aktensystem. The purpose of epa4all examples is to provide some examples of implementation in Java.
+Gematik publishes some specifications on how an ePA-Client can access to the ePA-Aktensystem. The purpose of epa4all examples is to provide some examples of implementation in Java.
 Please note that this project is still in development process, so significant changes may still be made. For this reason, this project has only a minor project version number.
 
 ### Release-Notes

@@ -2,7 +2,7 @@
 
 # Release notes epa4all-examples
 
-## Release 0.0.1
+## Release 0.1.5
 
 ### added
 - added TLSExample12.java to show, how an TLS-Connection can be established with ePA-FdV
